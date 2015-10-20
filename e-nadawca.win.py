@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*- 
+import getpass
 import urllib
 import urllib2
 from cookielib import CookieJar, FileCookieJar, LWPCookieJar
@@ -28,7 +29,7 @@ def zbior():
 
 def main():
 	u=raw_input('uzytkownik: ')
-	p=raw_input('haslo: ')
+	p=getpass.getpass('haslo: ')
 	if logowanie(u,p)==-1:
 		print "Błąd: nieprawidłowy login lub hasło"
 	else:
