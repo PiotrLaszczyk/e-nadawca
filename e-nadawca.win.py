@@ -20,19 +20,49 @@ def logowanie(u,p):
 class Zbior:
 	'''Klasa operująca za zbiorach'''
 	def dodaj(self,nazwa,data):
-		'''Tworzy zbiór, zwraca id_zbioru'''
-		pass
+		'''Tworzy zbiór, zwraca id_zbioru
+
+		nazwa=2015-10-21%5C2&data_nadania=2015-10-21&pni=&idnadawca_profil=&action=InsZbior&js=true
+		pni -> Urząd nadania
+		idnadawca_profil -> do uzupełnienia
+
+		'''
+		data=urllib.urlencode({'nazwa':str(nazwa),'data_nadania':str(data),'pni':'559619','idnadawca_profil':'18167','action':'InsZbior','js':'true'})
+		site=opener.open('https://e-nadawca.poczta-polska.pl/przesylki/',data)
+		resp=site.read()
+		print resp
 
 	def usun(self,id_zbioru):
-		'''Usuwa zbiór'''
-		pass
+		'''Usuwa zbiór
+
+		GET /przesylki/?action=DelZbior&arg1=&js=true HTTP/1.1
+
+		'''
+		data=urllib.urlencode({'action':'DelZbior','arg1':str(id_zbioru),'js':'true'})
+		site=opener.open("https://e-nadawca.poczta-polska.pl/przesylki/",data)
+		resp=site.read()
+		info=re.search("Zbiór został usunięty",resp)
+		if info is None:
+			print "Błąd: Usunięcie zbioru nie powiodło się"
+		else:
+			print "Zbiór został usunięty"
 
 	def pokazZbior(self,id_zbioru):
 		'''Zwraca słownik informacji o zbiorze, nazwa, planowana data nadania itp.
+
 		'wlasciciel': 'Andrzej<br >Andrzejewski', 
 		'data_utworzenia': '2015-10-21', 
 		'data_nadania': '2015-10-21, 
 		'nazwa': '2015-10-21\3 testowy'}
+
+		GET /przesylki/?action=SetFolder&arg1=2&js=true HTTP/1.1
+
+		arg:1 -> Przygotowane
+		arg:2 -> Wysłane
+		arg:3 -> Odebrane
+		arg:4 -> Archiwum
+		arg:5 -> Kosz
+
 		'''
 		data=urllib.urlencode({'action':'SetFolder','arg1':'1','js':'true'})
 		site=opener.open("https://e-nadawca.poczta-polska.pl/przesylki/",data)
@@ -46,20 +76,14 @@ class Zbior:
 		return new
 
 	def pokazWszystkie(self):
-		'''Zwraca słownik dostępnych zbiorów  w przygotowaniu'''
+		'''
+		Zwraca listę dostępnych zbiorów  w przygotowaniu
+		'''
 		data=urllib.urlencode({'action':'SetFolder','arg1':'1','js':'true'})
 		site=opener.open("https://e-nadawca.poczta-polska.pl/przesylki/",data)
-		zbior=re.findall("(\d{8})' OnClick='return Ajax.Go\(this\)' target='self'>(.{12,50})</a>")
-
+		resp=site.read()
+		zbior=re.findall("(\d{8})' OnClick='return Ajax.Go\(this\)' target='self'>(.{12,50})</a>",resp)
 		return zbior
-
-
-def zbior():
-	zbior=Zbior()
-	print zbior.pokazZbior(14620606)
-	#print "\nDostępne zbiory:"
-	#for z in zbior.pokazWszystkie():
-	#	print z[0]+' - '+z[1]
 
 def main():
 	u=raw_input('uzytkownik: ')
@@ -68,7 +92,23 @@ def main():
 		print "Błąd: nieprawidłowy login lub hasło"
 	else:
 		print "Zalogowano"
-		zbior()
+		zbior=Zbior()
+		while True:
+			cmd=raw_input('$ ')
+			if cmd=='list':
+				for zb in zbior.pokazWszystkie():
+					print zb[0]+' - '+zb[1]
+			elif cmd.startswith('info '):
+				param=int(cmd[cmd.index(' ')+1:])
+				for key,value in zbior.pokazZbior(param).iteritems():
+					print key+' = '+value
+			elif cmd.startswith('del '):
+				param=int(cmd[cmd.index(' ')+1:])
+				prompt=raw_input('Jesteś pewny, że chcesz usunąć zbiór '+str(param)+'? t/n ')
+				if prompt=='t':
+					zbior.usun(param)
+			elif cmd=='exit':
+				exit()
 		#przesylka=raw_input("Podaj rodzaj przesyłki (1-polecona, 2-zwykła): ")
 		#if int(przesylka)==1:
 		#	p=open("2.csv","r")
