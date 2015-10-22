@@ -45,7 +45,7 @@ class Zbior:
 		idnadawca_profil -> do uzupełnienia
 
 		'''
-		data=urllib.urlencode({'nazwa':str(nazwa).split("'")[0],'data_nadania':str(data),'pni':'559619','idnadawca_profil':'18167','action':'InsZbior','js':'true'})
+		data=urllib.urlencode({'nazwa':str(nazwa),'data_nadania':str(data),'pni':'559619','idnadawca_profil':'18167','action':'InsZbior','js':'true'})
 		resp=zapytanie('https://e-nadawca.poczta-polska.pl/przesylki/',data)
 		info=re.search('alertBox',resp)
 		try:
@@ -104,17 +104,22 @@ class Zbior:
 		zbior=re.findall('(\d{8})\' OnClick=\'return Ajax.Go\(this\)\' target=\'self\'>(.{10,50})</a>',resp)
 		return zbior
 
-	def dodajPrzeslke(self,typ,zbior,tablica):
+	def dodajPrzesylke(self,typ,zbior,linia):
+		tablica=linia.split(';')
 		data_polecony=urllib.urlencode({
 					'kategoria':'EKONOMICZNA','gabaryt':'GABARYT_A','masa_gramy':'','potw_odbioru':'1','potw_odbioru_ilosc':'1','epo_zasady':'0',
 					'idzbior':str(zbior),'idrodzaj_przesylki':'10','nazwa':tablica[0]+' '+tablica[1],'nazwa2':'','ulica':tablica[2]+', '+tablica[3],
 					'numer_domu':tablica[4],'numer_lokalu':tablica[5],'kod_pocztowy':tablica[6],'miejscowosc':tablica[7],'mobile':'','email':'',
 					'telefon':'','id_adresat':'1','opis':'','szablon_nazwa':'','action':'InsPrzesylka','js':'true'})
 		data_zwykly=urllib.urlencode({
-					'kategoria':'EKONOMICZNA','gabaryt':'GABARYT_A','masa_gramy':'350','idzbior':+str(zbior),'idrodzaj_przesylki':'22',
-					'nazwa':+tablica[0]+' '+tablica[1],'nazwa2':'','ulica':+tablica[2]+', '+tablica[3],'numer_domu':+tablica[4],'numer_lokalu':+tablica[5],
-					'kod_pocztowy':+tablica[6],'miejscowosc':+tablica[7],'mobile':'','email':'','telefon':'','id_adresat':'','opis':'','szablon_nazwa':'',
+					'kategoria':'EKONOMICZNA','gabaryt':'GABARYT_A','masa_gramy':'350','idzbior':str(zbior),'idrodzaj_przesylki':'22',
+					'nazwa':tablica[0]+' '+tablica[1],'nazwa2':'','ulica':tablica[2]+', '+tablica[3],'numer_domu':tablica[4],'numer_lokalu':tablica[5],
+					'kod_pocztowy':tablica[6],'miejscowosc':tablica[7],'mobile':'','email':'','telefon':'','id_adresat':'','opis':'','szablon_nazwa':'',
 					'action':'InsPrzesylka','js':'true'})
+		if int(typ)==0:
+			resp=zapytanie('https://e-nadawca.poczta-polska.pl/przesylki/',data_zwykly)
+		else:
+			resp=zapytanie('https://e-nadawca.poczta-polska.pl/przesylki/',data_polecony)
 
 
 def main():
@@ -130,7 +135,8 @@ def main():
 			cmd=raw_input('$ ')
 			if cmd=='help':
 				print "\n"
-				print "add <nazwa_zbioru> <data> - dodaje zbiór \nnp. add \'zbior testowy\' 2015-10-31"
+				print 'add <rodzaj_listu> <id_zbioru> <nazwa_pliku>'
+				print "create <nazwa_zbioru> <data> - dodaje zbiór \nnp. create \'zbior testowy\' 2015-10-31"
 				print 'del <id_zbioru> - usuwa zbiór'
 				print 'exit - konczy prace'
 				print 'help - wyświetla to co widzisz teraz'
@@ -155,13 +161,29 @@ def main():
 					prompt=raw_input('Jesteś pewny, że chcesz usunąć zbiór '+str(param)+'? t/n ')
 					if prompt=='t':
 						zbior.usunZbior(param)
-			elif cmd.startswith('add '):
-				param1=cmd[cmd.index("'")+1:]
-				param2=param1[param1.index("'")+2:]
+			elif cmd.startswith('create '):
+				param1=cmd.split("'")[1]
+				param2=cmd.split("'")[2][1:]
 				if param1=='' or param2=='':
-					print 'Usage: add \'<nazwa_zbioru>\' <data_w_formacie_2015-10-31>'
+					print 'Usage: create \'<nazwa_zbioru>\' <data_w_formacie_2015-10-31>'
 				else:
 					zbior.utworzZbior(param1,param2)
+			elif cmd.startswith('add '):
+				param1=cmd.split(' ')[1]
+				param2=cmd.split(' ')[2]
+				param3=cmd.split(' ')[3]
+				if param1=='' or param2=='':
+					print 'Usage: add <rodzaj_przesylki> <id_zbioru> <nazwa_pliku>'
+				else:
+					f=open(param3,'r')
+					i=1
+					length=sum(1 for l in f)
+					f.seek(0)
+					for linia in f:
+						zbior.dodajPrzesylke(param1,param2,linia)
+						print '%.2f' % float(i*100/float(length)) + '%'
+						i+=1
+					f.close()
 			elif cmd=='exit':
 				exit()
 		print 'Sesja wygasła'
