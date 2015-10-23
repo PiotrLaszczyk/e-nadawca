@@ -12,6 +12,7 @@ def zapytanie(url,data=None):
 		return site.read()
 
 class Enadawca:
+	'''Klasa zarządzjąca połączeniem do E-nadawcy'''
 	def login(self,u,p):
 		data=urllib.urlencode({'u':u,'p':p})
 		resp=zapytanie('https://e-nadawca.poczta-polska.pl',data)
@@ -76,7 +77,7 @@ class Zbior:
 		'data_nadania': '2015-10-21, 
 		'nazwa': '2015-10-21\3 testowy'}
 
-		GET /przesylki/?action=SetFolder&arg1=2&js=true HTTP/1.1
+		GET /przesylki/?action=GetZbior&arg1=14674749&js=true HTTP/1.1
 
 		arg:1 -> Przygotowane
 		arg:2 -> Wysłane
@@ -85,14 +86,24 @@ class Zbior:
 		arg:5 -> Kosz
 
 		'''
+		data=urllib.urlencode({'action':'GetZbior','arg1':str(id_zbioru),'js':'true'})
+		resp=zapytanie('https://e-nadawca.poczta-polska.pl/przesylki/',data)
+		r_title=re.compile('name=\'nazwa\' maxlength=\'50\' class=\'widget widgetSizeFull\' value=\'(?P<NazwaZbioru>.{7,50})\' autocomplete')
+		r_date=re.compile('name=\'data_nadania\' maxlength=\'10\' class=\'widget\' value=\'(?P<DataNadania>\d{4}-\d{2}-\d{2})\' onblur')
+		r_count=re.compile('<p class=\'FormRowReal\'>(?P<IloscPrzesylekPoprawnychNiepoprawnych>\d+\s/\s\d+)</p>')
+		title=r_title.search(resp).groupdict()
+		date=r_date.search(resp).groupdict()
+		count=r_count.search(resp).groupdict()
+		new=title.copy()
+		new.update(date)
+		new.update(count)
 		data=urllib.urlencode({'action':'SetFolder','arg1':'1','js':'true'})
 		resp=zapytanie('https://e-nadawca.poczta-polska.pl/przesylki/',data)
-		r_title=re.compile(str(id_zbioru)+'\' OnClick=\'return Ajax.Go[(]this[)]\' target=\'self\'>(?P<nazwa>.{12,50})</a>')
-		r_info=re.compile(str(id_zbioru)+'\' onmouseover=\'ToolTip[(]["]Data utworzenia: (?P<data_utworzenia>\d{4}-\d{2}-\d{2})&lt;br&gt;Planowana data nadania:<br >(?P<data_nadania>\d{4}-\d{2}-\d{2})&lt;br&gt;Utworzony przez: (?P<wlasciciel>\D+<br >\D+)&lt;br&gt;')
-		title=r_title.search(resp).groupdict()
-		info=r_info.search(resp).groupdict()
-		new=info.copy()
-		new.update(title)
+		r_owner=re.compile(str(id_zbioru)+'\' onmouseover=\'ToolTip[(]["]Data utworzenia: (?P<DataUtworzenia>\d{4}-\d{2}-\d{2})&lt;br&gt;Planowana data nadania:<br >(?P<DataNadania>\d{4}-\d{2}-\d{2})&lt;br&gt;Utworzony przez: (?P<Wlasciciel>\D+)&lt;br&gt;')
+		temp_owner=r_owner.search(resp).groupdict()
+		owner={}
+		owner['Wlasciciel']=temp_owner['Wlasciciel'].split('<br >')[0]+' '+temp_owner['Wlasciciel'].split('<br >')[1]
+		new.update(owner)
 		return new
 
 	def pokazWszystkie(self):
@@ -101,7 +112,7 @@ class Zbior:
 		'''
 		data=urllib.urlencode({'action':'SetFolder','arg1':'1','js':'true'})
 		resp=zapytanie('https://e-nadawca.poczta-polska.pl/przesylki/',data)
-		zbior=re.findall('(\d{8})\' OnClick=\'return Ajax.Go\(this\)\' target=\'self\'>(.{10,50})</a>',resp)
+		zbior=re.findall('(\d{8})\' OnClick=\'return Ajax.Go\(this\)\' target=\'self\'>(.{7,50})</a>',resp)
 		return zbior
 
 	def dodajPrzesylke(self,typ,zbior,linia):
@@ -187,14 +198,6 @@ def main():
 			elif cmd=='exit':
 				exit()
 		print 'Sesja wygasła'
-		#przesylka=raw_input(Podaj rodzaj przesyłki (1-polecona, 2-zwykła): )
-		#if int(przesylka)==1:
-		#	p=open(2.csv,r)
-		#	for linia in p:
-		#		print linia
-		#		tablica=linia.split(';')
-		#		
-		#		site=opener.open(https://e-nadawca.poczta-polska.pl/przesylki/,data)
 
 if __name__ == '__main__':
 	main()
