@@ -53,7 +53,7 @@ class Zbior:
 			info.group()
 			return -1 # Błąd: Nie udało się utworzyć zbioru
 		except:
-			return 0
+			return 0 # Zbiór został utworzony
 
 	def usunZbior(self,id_zbioru):
 		'''Usuwa zbiór
@@ -115,15 +115,21 @@ class Zbior:
 		zbior=re.findall('(\d{8})\' OnClick=\'return Ajax.Go\(this\)\' target=\'self\'>(.{7,50})</a>',resp)
 		return zbior
 
-	def dodajPrzesylke(self,typ,zbior,linia):
+	def dodajPrzesylke(self,typ,id_zbioru,linia):
+		'''
+		Dodaje przesyłkę do zbioru
+		typ -> 0-zwykły 1-polecony
+		id_zbioru ->
+		linia -> [Nazwisko];[Imię];[Miejscowość];[Ulica];[Nr_domu];[Nr_lokalu];[Kod_pocztowy];[Poczta]; 
+		'''
 		tablica=linia.split(';')
 		data_polecony=urllib.urlencode({
 					'kategoria':'EKONOMICZNA','gabaryt':'GABARYT_A','masa_gramy':'','potw_odbioru':'1','potw_odbioru_ilosc':'1','epo_zasady':'0',
-					'idzbior':str(zbior),'idrodzaj_przesylki':'10','nazwa':tablica[0]+' '+tablica[1],'nazwa2':'','ulica':tablica[2]+', '+tablica[3],
+					'idzbior':str(id_zbioru),'idrodzaj_przesylki':'10','nazwa':tablica[0]+' '+tablica[1],'nazwa2':'','ulica':tablica[2]+', '+tablica[3],
 					'numer_domu':tablica[4],'numer_lokalu':tablica[5],'kod_pocztowy':tablica[6],'miejscowosc':tablica[7],'mobile':'','email':'',
 					'telefon':'','id_adresat':'1','opis':'','szablon_nazwa':'','action':'InsPrzesylka','js':'true'})
 		data_zwykly=urllib.urlencode({
-					'kategoria':'EKONOMICZNA','gabaryt':'GABARYT_A','masa_gramy':'350','idzbior':str(zbior),'idrodzaj_przesylki':'22',
+					'kategoria':'EKONOMICZNA','gabaryt':'GABARYT_A','masa_gramy':'350','idzbior':str(id_zbioru),'idrodzaj_przesylki':'22',
 					'nazwa':tablica[0]+' '+tablica[1],'nazwa2':'','ulica':tablica[2]+', '+tablica[3],'numer_domu':tablica[4],'numer_lokalu':tablica[5],
 					'kod_pocztowy':tablica[6],'miejscowosc':tablica[7],'mobile':'','email':'','telefon':'','id_adresat':'','opis':'','szablon_nazwa':'',
 					'action':'InsPrzesylka','js':'true'})
@@ -145,7 +151,6 @@ def main():
 		while enadawca.session()==0:
 			cmd=raw_input('$ ')
 			if cmd=='help':
-				print "\n"
 				print 'add <rodzaj_listu> <id_zbioru> <nazwa_pliku>'
 				print "create <nazwa_zbioru> <data> - dodaje zbiór \nnp. create \'zbior testowy\' 2015-10-31"
 				print 'del <id_zbioru> - usuwa zbiór'
@@ -153,7 +158,6 @@ def main():
 				print 'help - wyświetla to co widzisz teraz'
 				print 'info <id_zbioru> - wyświetla informacje o zbiorze'
 				print 'list - wyświetla dostępne zbiory'
-				print "\n"
 			elif cmd=='list':
 				for zb in zbior.pokazWszystkie():
 					print zb[0]+' - '+zb[1]

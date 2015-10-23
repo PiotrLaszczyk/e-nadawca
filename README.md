@@ -1,0 +1,1 @@
+Skrypt do obs³ugi serwisu e-nadawca z linii poleceñ z mo¿liwoœci¹ dodawania przesy³ek z pliku csv
