@@ -48,6 +48,9 @@ class Zbior:
 		'''
 		data=urllib.urlencode({'nazwa':str(nazwa),'data_nadania':str(data),'pni':'559619','idnadawca_profil':'18167','action':'InsZbior','js':'true'})
 		resp=zapytanie('https://e-nadawca.poczta-polska.pl/przesylki/',data)
+		p=file('output.txt','w')
+		p.write(resp)
+		p.close()
 		info=re.search('alertBox',resp)
 		try:
 			info.group()
@@ -99,10 +102,10 @@ class Zbior:
 		new.update(count)
 		data=urllib.urlencode({'action':'SetFolder','arg1':'1','js':'true'})
 		resp=zapytanie('https://e-nadawca.poczta-polska.pl/przesylki/',data)
-		r_owner=re.compile(str(id_zbioru)+'\' onmouseover=\'ToolTip[(]["]Data utworzenia: (?P<DataUtworzenia>\d{4}-\d{2}-\d{2})&lt;br&gt;Planowana data nadania:<br >(?P<DataNadania>\d{4}-\d{2}-\d{2})&lt;br&gt;Utworzony przez: (?P<Wlasciciel>\D+)&lt;br&gt;')
+		r_owner=re.compile(str(id_zbioru)+'\' onmouseover=\'ToolTip[(]["]Data utworzenia: (?P<DataUtworzenia>\d{4}-\d{2}-\d{2})&lt;br&gt;Planowana data nadania:<br>(?P<DataNadania>\d{4}-\d{2}-\d{2})&lt;br&gt;Utworzony przez: (?P<Wlasciciel>\D+)&lt;br&gt;')
 		temp_owner=r_owner.search(resp).groupdict()
 		owner={}
-		owner['Wlasciciel']=temp_owner['Wlasciciel'].split('<br >')[0]+' '+temp_owner['Wlasciciel'].split('<br >')[1]
+		owner['Wlasciciel']=temp_owner['Wlasciciel'].split('<br>')[0]+' '+temp_owner['Wlasciciel'].split('<br>')[1]
 		new.update(owner)
 		return new
 
@@ -182,7 +185,10 @@ def main():
 				if param1=='' or param2=='':
 					print 'Usage: create \'<nazwa_zbioru>\' <data_w_formacie_2015-10-31>'
 				else:
-					zbior.utworzZbior(param1,param2)
+					if zbior.utworzZbior(param1,param2)==0:
+						print "Dodany"
+					else:
+						print "Błąd, sprawdź datę!"
 			elif cmd.startswith('add '):
 				param1=cmd.split(' ')[1]
 				param2=cmd.split(' ')[2]
